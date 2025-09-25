@@ -78,6 +78,13 @@ if uploaded_file is not None:
 
         # Chunk
         with st.spinner("Chunking document..."):
+            # safe assignment
+            chunk_size = int(st.session_state.get("ui_chunk_size", config.CHUNK_SIZE))
+            chunk_overlap = int(st.session_state.get("ui_chunk_overlap", config.CHUNK_OVERLAP))
+            # bounding values (optional)
+            chunk_size = max(200, min(chunk_size, 5000))
+            chunk_overlap = max(0, min(chunk_overlap, 2000))
+
             chunks = sentence_chunking_with_overlap(st.session_state.session_data["doc_text"], chunk_size=chunk_size, overlap=chunk_overlap)
             if not chunks:
                 st.error("Chunking produced no chunks — aborting.")
