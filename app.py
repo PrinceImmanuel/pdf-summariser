@@ -33,7 +33,7 @@ _client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 st.set_page_config(
     page_title="PDF Chatbot & Summarizer",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="auto"
 )
 
 # Streamlit page config
@@ -46,23 +46,6 @@ Upload a PDF and everything will be kept only in your session memory (no disk, n
 When the session ends all data is discarded.
 """
 )
-# Make sidebar wider
-st.markdown(
-    """
-    <style>
-        /* Sidebar width */
-        section[data-testid="stSidebar"] {
-            width: 500px !important;   /* default ~250px */
-        }
-        /* Ensure main area shrinks instead */
-        section[data-testid="stSidebar"] > div:first-child {
-            width: 500px !important;
-        }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
-
 
 # Sidebar controls
 st.sidebar.header("Controls")
@@ -142,16 +125,44 @@ if uploaded_file and st.sidebar.button("Generate full-document summary (map-redu
             chunk_summaries = []
             for i, ch in enumerate(st.session_state.session_data["chunks"]):
                 if i % 10 == 0:
-                    st.sidebar.write(f"Summarizing chunk {i+1}/{len(st.session_state.session_data['chunks'])}...")
-                chunk_summaries.append(summarize_chunk(ch, model=config.LLM_MODEL, approx_max_tokens=config.MAP_SUMMARY_TOKENS))
+                    st.sidebar.write(
+                        f"Summarizing chunk {i+1}/{len(st.session_state.session_data['chunks'])}..."
+                    )
+                chunk_summaries.append(
+                    summarize_chunk(
+                        ch,
+                        model=config.LLM_MODEL,
+                        approx_max_tokens=config.MAP_SUMMARY_TOKENS,
+                    )
+                )
             st.sidebar.success("Chunk summaries created — aggregating...")
 
         with st.spinner("Aggregating chunk summaries (reduce step)..."):
-            final_summary = aggregate_summaries(chunk_summaries, model=config.LLM_MODEL, max_tokens=config.FINAL_SUMMARY_TOKENS)
+            final_summary = aggregate_summaries(
+                chunk_summaries,
+                model=config.LLM_MODEL,
+                max_tokens=config.FINAL_SUMMARY_TOKENS,
+            )
             st.session_state.session_data["summary"] = final_summary
 
-        st.sidebar.subheader("Document Summary")
-        st.sidebar.info(st.session_state.session_data["summary"])
+# ✅ Show the summary in the main page (not sidebar)
+if st.session_state.session_data.get("summary"):
+    with st.expander("📄 Document Summary", expanded=False):
+        st.markdown(
+            f"""
+            <div style="
+                background:#e6f0ff;
+                padding:18px;
+                border-radius:12px;
+                color:#0b2b4a;
+                line-height:1.6;
+            ">
+            {st.session_state.session_data['summary']}
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
 
 # Chat input & RAG answering
 if uploaded_file and st.session_state.session_data["embeddings"]:
