@@ -11,6 +11,7 @@ Everything is kept in st.session_state (SESSION_ONLY behavior).
 
 import io
 import streamlit as st
+import streamlit.components.v1 as components
 import numpy as np
 from openai import OpenAI
 import os
@@ -39,6 +40,60 @@ st.set_page_config(
 # Streamlit page config
 st.set_page_config(page_title="PDF Chat & Summarizer (session-only)", layout="wide")
 st.title("PDF Chatbot & Summarizer — Modular Session-only")
+
+# Inject JS that keeps focused inputs visible on mobile
+components.html(
+        """
+        <script>
+        (function() {
+        // helper: scroll element into view after a short delay
+        function scrollIntoViewDelayed(el) {
+            if (!el) return;
+            // delay helps with mobile keyboard animation
+            setTimeout(function() {
+            try {
+                el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+            } catch(e) {
+                el.scrollIntoView();
+            }
+            }, 250);
+        }
+
+        // handle focus events for inputs, textareas, contentEditable
+        document.addEventListener('focusin', function(e) {
+            const t = e.target;
+            if (!t) return;
+            const tag = t.tagName && t.tagName.toLowerCase();
+            if (tag === 'input' || tag === 'textarea' || t.isContentEditable) {
+            scrollIntoViewDelayed(t);
+            }
+        });
+
+        // on resize (keyboard open/close on some browsers), re-scroll active element
+        let rTimer;
+        window.addEventListener('resize', function() {
+            if (rTimer) clearTimeout(rTimer);
+            rTimer = setTimeout(function() {
+            const active = document.activeElement;
+            if (active && (active.tagName.toLowerCase() === 'input' || active.tagName.toLowerCase() === 'textarea' || active.isContentEditable)) {
+                scrollIntoViewDelayed(active);
+            }
+            }, 200);
+        });
+
+        // small helper: if page is long, ensure body has a little bottom padding on mobile
+        const style = document.createElement('style');
+        style.innerHTML = `
+            body { padding-bottom: env(safe-area-inset-bottom, 20px); }
+            /* ensure input widgets are above other content */
+            input, textarea, .stTextInput, .stTextArea { z-index: 9999; position: relative; }
+        `;
+        document.head.appendChild(style);
+        })();
+        </script>
+        """,
+        height=0,
+)
 
 st.markdown(
     """
