@@ -30,6 +30,12 @@ load_dotenv(find_dotenv())  # this loads .env file values into os.environ
 
 _client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
+st.set_page_config(
+    page_title="PDF Chatbot & Summarizer",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
 # Streamlit page config
 st.set_page_config(page_title="PDF Chat & Summarizer (session-only)", layout="wide")
 st.title("PDF Chatbot & Summarizer — Modular Session-only")
@@ -40,6 +46,23 @@ Upload a PDF and everything will be kept only in your session memory (no disk, n
 When the session ends all data is discarded.
 """
 )
+# Make sidebar wider
+st.markdown(
+    """
+    <style>
+        /* Sidebar width */
+        section[data-testid="stSidebar"] {
+            width: 500px !important;   /* default ~250px */
+        }
+        /* Ensure main area shrinks instead */
+        section[data-testid="stSidebar"] > div:first-child {
+            width: 500px !important;
+        }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 
 # Sidebar controls
 st.sidebar.header("Controls")
